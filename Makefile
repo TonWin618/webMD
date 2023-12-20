@@ -1,44 +1,43 @@
-# Compiler settings
+# 编译配置
 CC=gcc
 CFLAGS=-Isrc/include -Wall
 LDFLAGS=-L./lib -lcmark
 
-# Project settings
+# 项目路径配置
 SRC_DIR=src
 OBJ_DIR=obj
 BIN_DIR=bin
 TESTS_DIR=tests
 
-# Create a list of source and object files
 SRCS=$(wildcard $(SRC_DIR)/*.c)
 OBJS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 TESTS=$(wildcard $(TESTS_DIR)/*.c)
 
-# Target settings
-TARGET=$(BIN_DIR)/postonly
+# 目标设置
+TARGET=$(BIN_DIR)/webMD
 
-# Create directories
+# 创建目录
 $(shell mkdir -p $(OBJ_DIR) $(BIN_DIR))
 
-# Default target
+# 默认目标
 all: $(TARGET)
 
-# Linking
+# 链接
 $(TARGET): $(OBJS)
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-# Compiling
+# 编译
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Run tests
+# 运行测试
 test: $(TARGET)
 	$(CC) $(CFLAGS) $(TESTS) -o $(BIN_DIR)/tests
 	$(BIN_DIR)/tests
 
-# Clean up
+# 清理代码
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-# Phony targets
+# 伪目标
 .PHONY: all test clean

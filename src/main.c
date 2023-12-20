@@ -22,13 +22,20 @@ int get_line(int sock, char *buf, int size);
 int startup(uint16_t *port);
 void handle_request(void *arg);
 
+//默认请求头
 void headers(int client, const char *code);
+//返回页面渲染
 void unimplemented(int client);
 void not_found(int client);
 void render_dir(char *originalBasePath, char *currentPath, char *html, int depth);
 void render_html(int client, const char *filename);
 void render_markdown(int client, const char *filename);
 
+/**
+ * URL解码
+ * @param encoded 编码过的URL字符串
+ * @return 解码后的字符串
+ */
 char *url_docode(const char *encoded)
 {
     char *decoded = malloc(strlen(encoded) + 1);
@@ -65,6 +72,11 @@ char *url_docode(const char *encoded)
     return decoded;
 }
 
+/**
+ * 发送HTTP响应头
+ * @param client 客户端socket描述符
+ * @param code HTTP状态码和描述
+ */
 void headers(int client, const char *code)
 {
     char buf[1024];
@@ -80,19 +92,26 @@ void headers(int client, const char *code)
     write(client, buf, strlen(buf));
 }
 
+/**
+ * 发送404未找到响应
+ * @param client 客户端socket描述符
+ */
 void not_found(int client)
 {
     char buf[1024];
     headers(client, HTTP_NOT_FOUND);
 
     sprintf(buf, "<HTML><TITLE>Not Found</TITLE>\r\n"
-                 "<BODY><P>The server could not fulfill\r\n"
-                 "your request because the resource specified\r\n"
-                 "is unavailable or nonexistent.\r\n"
+                 "<BODY><P>"
+                 "请求的资源不存在于服务器\r\n"
                  "</BODY></HTML>\r\n");
     write(client, buf, strlen(buf));
 }
 
+/**
+ * 发送501未实现方法响应
+ * @param client 客户端socket描述符
+ */
 void unimplemented(int client)
 {
     char buf[1024];
@@ -103,6 +122,11 @@ void unimplemented(int client)
     write(client, buf, strlen(buf));
 }
 
+/**
+ * 渲染HTML内容并发送给客户端
+ * @param client 客户端socket描述符
+ * @param filename 要渲染的HTML文件名
+ */
 void render_html(int client, const char *filename)
 {
     FILE *resource = NULL;
@@ -111,7 +135,7 @@ void render_html(int client, const char *filename)
 
     buf[0] = 'A';
     buf[1] = '\0';
-    while ((numchars > 0) && strcmp("\n", buf)) /* read & discard headers */
+    while ((numchars > 0) && strcmp("\n", buf)) //抛去剩余的headers
         numchars = get_line(client, buf, sizeof(buf));
 
     resource = fopen(filename, "r");
@@ -130,6 +154,11 @@ void render_html(int client, const char *filename)
     fclose(resource);
 }
 
+/**
+ * 渲染Markdown文件并发送给客户端
+ * @param client 客户端socket描述符
+ * @param filename 要渲染的Markdown文件名
+ */
 void render_markdown(int client, const char *filename)
 {
     FILE *fp = fopen(filename, "r");
@@ -187,6 +216,13 @@ void render_markdown(int client, const char *filename)
     return;
 }
 
+/**
+ * 渲染目录内容为HTML
+ * @param originalBasePath 原始基础路径
+ * @param currentPath 当前路径
+ * @param html 用于存储生成的HTML的字符串
+ * @param depth 目录深度
+ */
 void render_dir(char *originalBasePath, char *currentPath, char *html, int depth)
 {
     char path[1000];
@@ -194,18 +230,18 @@ void render_dir(char *originalBasePath, char *currentPath, char *html, int depth
     DIR *dir = opendir(currentPath);
 
     if (!dir)
-        return; // Unable to open directory
+        return;
 
     while ((dp = readdir(dir)) != NULL)
     {
         if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
         {
-            // Construct new path from our current path
+            // 为当前路径构建新路径
             strcpy(path, currentPath);
             strcat(path, "/");
             strcat(path, dp->d_name);
 
-            // Add indentation
+            //添加缩进
             for (int i = 0; i < depth; i++)
             {
                 strcat(html, "&nbsp;&nbsp;&nbsp;&nbsp;");
@@ -220,11 +256,11 @@ void render_dir(char *originalBasePath, char *currentPath, char *html, int depth
             }
             else if (strstr(dp->d_name, ".md") != NULL)
             {
-                // Calculate the relative path
-                char *relativePath = path + strlen(originalBasePath) + 1; // +1 to skip the '/'
+                //计算相对路径
+                char *relativePath = path + strlen(originalBasePath) + 1; // +1 以跳过 '/'
 
                 strcat(html, "<a href='");
-                strcat(html, relativePath); // Use relative path here
+                strcat(html, relativePath); //使用相对路径
                 strcat(html, "'>");
                 strcat(html, dp->d_name);
                 strcat(html, "</a><br>\n");
@@ -235,12 +271,23 @@ void render_dir(char *originalBasePath, char *currentPath, char *html, int depth
     closedir(dir);
 }
 
+/**
+ * 出错时退出程序
+ * @param error 错误信息
+ */
 void exit_with_error(const char *error)
 {
     printf("Error: %s\n", error);
     exit(EXIT_FAILURE);
 }
 
+/**
+ * 从客户端读取一行数据
+ * @param sock 客户端socket描述符
+ * @param buf 缓冲区
+ * @param size 缓冲区大小
+ * @return 读取的字符数
+ */
 int get_line(int sock, char *buf, int size)
 {
     int i = 0;
@@ -271,6 +318,11 @@ int get_line(int sock, char *buf, int size)
     return (i);
 }
 
+/**
+ * 初始化服务器并开始监听
+ * @param port 指向要监听的端口号的指针
+ * @return 服务器socket描述符
+ */
 int startup(uint16_t *port)
 {
     int opt = 1;
@@ -317,6 +369,10 @@ int startup(uint16_t *port)
     return server_socket;
 }
 
+/**
+ * 处理客户端请求
+ * @param arg 客户端socket描述符
+ */
 void handle_request(void *arg)
 {
     int client = (intptr_t)arg;
@@ -335,7 +391,7 @@ void handle_request(void *arg)
 
     buf_index = 0;
 
-    // method
+    // 解析method
     i = 0;
     while (!isspace(buf[i]) && (i < sizeof(method) - 1))
     {
@@ -358,7 +414,7 @@ void handle_request(void *arg)
         buf_index++;
     }
 
-    // url
+    // 解析url
     while (!isspace(buf[buf_index]) && (i < sizeof(url) - 1) && (buf_index < numchars))
     {
         url[i] = buf[buf_index];
@@ -367,6 +423,7 @@ void handle_request(void *arg)
     }
     url[i] = '\0';
 
+    //根目录请求
     if (strcasecmp(url, "/") == 0)
     {
         headers(client, HTTP_OK);
@@ -380,6 +437,7 @@ void handle_request(void *arg)
         return;
     }
 
+    //md文件请求
     sprintf(path, "bin/mds%s", url_docode(url));
     printf("%s", path);
 
