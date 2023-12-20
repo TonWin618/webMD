@@ -1,6 +1,7 @@
 # Compiler settings
 CC=gcc
 CFLAGS=-Isrc/include -Wall
+LDFLAGS=-L./lib -lcmark
 
 # Project settings
 SRC_DIR=src
@@ -24,7 +25,7 @@ all: $(TARGET)
 
 # Linking
 $(TARGET): $(OBJS)
-	$(CC) $^ -o $@
+	$(CC) $^ -o $@ $(LDFLAGS)
 
 # Compiling
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
