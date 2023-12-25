@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "response.h": "c",
+        "unistd.h": "c",
+        "string.h": "c",
+        "pthread.h": "c",
+        "server.h": "c",
+        "stdio.h": "c",
+        "stat.h": "c"
+    }
+}
