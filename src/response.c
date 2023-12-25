@@ -94,8 +94,7 @@ void render_markdown(int client, const char *filename)
     FILE *fp = fopen(filename, "r");
     if (fp == NULL)
     {
-        perror("Error opening file");
-        return;
+        not_found(client);
     }
 
     // 读取文件内容到字符串
@@ -107,6 +106,7 @@ void render_markdown(int client, const char *filename)
     {
         perror("Memory allocation failed");
         fclose(fp);
+        not_found(client);
         return;
     }
     fread(markdown, 1, length, fp);
