@@ -56,6 +56,7 @@ webMD 是一个简单的Markdown服务器，它可以将Markdown文件渲染为H
 ## 使用
 
 在浏览器中访问 `http://localhost:8080`（或您指定的端口）以查看Markdown文件。
+请将所有Markdown文件放置在bin/mds目录下，以便程序能够正确获取。
 
 ## 版权和许可
 
